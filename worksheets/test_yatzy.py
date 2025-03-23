@@ -27,7 +27,7 @@ class TestYatzy(unittest.TestCase):
 
     def test_sixes(self):
         self.game.dice = [6, 6, 6, 6, 6]
-        self.assertEqual(self.game.sixes(), 36)
+        self.assertEqual(self.game.sixes(), 30)
 
     def test_one_pair(self):
         self.game.dice = [1, 2, 3, 4, 4]
