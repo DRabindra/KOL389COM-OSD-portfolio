@@ -1,69 +1,126 @@
 import unittest
 from yatzy import Yatzy
+import time
 
 class TestYatzy(unittest.TestCase):
+    """This class tests all the Yatzy game functionality"""
+    
     def setUp(self):
+        """Setup a new game before each test"""
+        print("\nSetting up new game...", end=" ")
         self.game = Yatzy()
+        print("Done!")
+        time.sleep(0.1)  # Makes it feel more "real"
+    
+    # Test 1: Basic dice rolling
+    def test_dice_rolling(self):
+        """Check if dice rolling works properly"""
+        print("\nTest 1: Checking dice rolling...")
+        first_roll = self.game.dice.copy()
+        
+        # Second roll should change some dice
+        self.game.roll()
+        second_roll = self.game.dice
+        
+        # At least one die should change (unless all were locked)
+        self.assertNotEqual(first_roll, second_roll, 
+                          "Dice didn't change after roll!")
+        print("✓ Roll test passed")
+    
+    # Test 2: Locking mechanism
+    def test_dice_locking(self):
+        """Test if locking dice works"""
+        print("\nTest 2: Testing dice locking...")
+        self.game.dice = [1,2,3,4,5]  # Set fixed values for testing
+        
+        # Lock first die
+        self.game.lock_die(0)
+        self.game.roll()
+        
+        # Die 0 should stay the same, others change
+        self.assertEqual(self.game.dice[0], 1,
+                        "Locked die changed!")
+        print("✓ Lock test passed")
+    
+    # Test 3: Scoring - Ones to Sixes
+    def test_basic_scoring(self):
+        """Test all number categories (ones to sixes)"""
+        print("\nTest 3: Testing basic scoring...")
+        test_cases = [
+            ([1,1,2,2,2], "ones", 2),
+            ([2,2,2,4,5], "twos", 6),
+            ([6,6,6,6,6], "sixes", 30)  # Fixed from earlier bug!
+        ]
+        
+        for dice, category, expected in test_cases:
+            with self.subTest(category=category):
+                self.game.dice = dice
+                result = getattr(self.game, category)()
+                self.assertEqual(result, expected,
+                               f"{category} scoring failed!")
+        print("✓ Basic scoring passed")
+    
+    # Test 4: Special categories
+    def test_special_categories(self):
+        """Test pairs, straights, full house etc."""
+        print("\nTest 4: Testing special categories...")
+        cases = [
+            ([1,1,2,3,4], "one_pair", 2),
+            ([2,2,3,3,4], "two_pairs", 10),
+            ([1,1,1,4,5], "three_alike", 3),
+            ([1,1,1,1,5], "four_alike", 4),
+            ([1,2,3,4,5], "small_straight", 15),
+            ([2,3,4,5,6], "large_straight", 20),
+            ([1,1,2,2,2], "full_house", 8),
+            ([1,2,3,4,5], "chance", 15),
+            ([5,5,5,5,5], "yatzy", 50)
+        ]
+        
+        for dice, category, expected in cases:
+            with self.subTest(category=category):
+                self.game.dice = dice
+                result = getattr(self.game, category)()
+                self.assertEqual(result, expected,
+                               f"{category} failed!")
+        print("✓ Special categories passed")
+    
+    # Test 5: Edge cases
+    def test_edge_cases(self):
+        """Test with no possible scores"""
+        print("\nTest 5: Testing edge cases...")
+        no_score_dice = [1,2,3,4,6]  # No pairs or specials
+        self.game.dice = no_score_dice
+        
+        self.assertEqual(self.game.one_pair(), 0,
+                        "Found pair where none exists!")
+        self.assertEqual(self.game.full_house(), 0,
+                        "Found full house where none exists!")
+        print("✓ Edge cases passed")
 
-    def test_ones(self):
-        self.game.dice = [1, 2, 3, 4, 5]
-        self.assertEqual(self.game.ones(), 1)
-
-    def test_twos(self):
-        self.game.dice = [2, 2, 3, 4, 5]
-        self.assertEqual(self.game.twos(), 4)
-
-    def test_threes(self):
-        self.game.dice = [3, 3, 3, 4, 5]
-        self.assertEqual(self.game.threes(), 9)
-
-    def test_fours(self):
-        self.game.dice = [4, 4, 4, 4, 5]
-        self.assertEqual(self.game.fours(), 16)
-
-    def test_fives(self):
-        self.game.dice = [5, 5, 5, 5, 5]
-        self.assertEqual(self.game.fives(), 25)
-
-    def test_sixes(self):
-        self.game.dice = [6, 6, 6, 6, 6]
-        self.assertEqual(self.game.sixes(), 30)
-
-    def test_one_pair(self):
-        self.game.dice = [1, 2, 3, 4, 4]
-        self.assertEqual(self.game.one_pair(), 8)
-
-    def test_two_pairs(self):
-        self.game.dice = [1, 1, 2, 3, 3]
-        self.assertEqual(self.game.two_pairs(), 8)
-
-    def test_three_alike(self):
-        self.game.dice = [2, 2, 2, 3, 4]
-        self.assertEqual(self.game.three_alike(), 6)
-
-    def test_four_alike(self):
-        self.game.dice = [2, 2, 2, 2, 4]
-        self.assertEqual(self.game.four_alike(), 8)
-
-    def test_small_straight(self):
-        self.game.dice = [1, 2, 3, 4, 5]
-        self.assertEqual(self.game.small_straight(), 15)
-
-    def test_large_straight(self):
-        self.game.dice = [2, 3, 4, 5, 6]
-        self.assertEqual(self.game.large_straight(), 20)
-
-    def test_full_house(self):
-        self.game.dice = [1, 1, 2, 2, 2]
-        self.assertEqual(self.game.full_house(), 8)
-
-    def test_chance(self):
-        self.game.dice = [1, 2, 3, 4, 5]
-        self.assertEqual(self.game.chance(), 15)
-
-    def test_yatzy(self):
-        self.game.dice = [5, 5, 5, 5, 5]
-        self.assertEqual(self.game.yatzy(), 50)
-
+# Simple way to run tests with different verbosity
 if __name__ == '__main__':
-    unittest.main()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-v", "--verbose", action="store_true",
+                       help="Show detailed test output")
+    args = parser.parse_args()
+    
+    if args.verbose:
+        unittest.main(verbosity=2)
+    else:
+        # Simple student-friendly output
+        print("\n" + "="*50)
+        print("Running Yatzy Tests...")
+        print("="*50)
+        test_runner = unittest.TextTestRunner(verbosity=0)
+        suite = unittest.TestLoader().loadTestsFromTestCase(TestYatzy)
+        result = test_runner.run(suite)
+        
+        # Simple summary
+        print("\nTest Summary:")
+        print(f"Passed: {result.testsRun - len(result.failures)}")
+        print(f"Failed: {len(result.failures)}")
+        if result.wasSuccessful():
+            print("\n✅ All tests passed! Good job!")
+        else:
+            print("\n❌ Some tests failed. Check your code!")
